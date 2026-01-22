@@ -54,11 +54,13 @@ export default function HomePage() {
   const [revealingIndex, setRevealingIndex] = useState<number | null>(null);
   const [pendingPlayerReveal, setPendingPlayerReveal] = useState(false);
   const [offerVisible, setOfferVisible] = useState(false);
+  const [offerButtonsVisible, setOfferButtonsVisible] = useState(false);
   const [displayRemaining, setDisplayRemaining] = useState<number[]>(CASE_VALUES);
   const [pendingRemaining, setPendingRemaining] = useState<number[] | null>(null);
   const [status, setStatus] = useState('Pick your case to start.');
   const revealTimerRef = useRef<number | null>(null);
   const offerTimerRef = useRef<number | null>(null);
+  const offerButtonsTimerRef = useRef<number | null>(null);
 
   const applyPendingRemaining = useCallback(() => {
     if (pendingRemaining) {
@@ -113,6 +115,9 @@ export default function HomePage() {
     if (offerTimerRef.current) {
       window.clearTimeout(offerTimerRef.current);
     }
+    if (offerButtonsTimerRef.current) {
+      window.clearTimeout(offerButtonsTimerRef.current);
+    }
   }, []);
 
   const refresh = useCallback(
@@ -137,14 +142,24 @@ export default function HomePage() {
       window.clearTimeout(offerTimerRef.current);
       offerTimerRef.current = null;
     }
+    if (offerButtonsTimerRef.current) {
+      window.clearTimeout(offerButtonsTimerRef.current);
+      offerButtonsTimerRef.current = null;
+    }
     if (modalOffer !== null) {
       setOfferVisible(false);
+      setOfferButtonsVisible(false);
       offerTimerRef.current = window.setTimeout(() => {
         setOfferVisible(true);
         offerTimerRef.current = null;
       }, 2000);
+      offerButtonsTimerRef.current = window.setTimeout(() => {
+        setOfferButtonsVisible(true);
+        offerButtonsTimerRef.current = null;
+      }, 2000);
     } else {
       setOfferVisible(false);
+      setOfferButtonsVisible(false);
     }
   }, [modalOffer]);
 
@@ -211,7 +226,7 @@ export default function HomePage() {
       setPendingRemaining(updated.remainingValues);
       refresh(`Case ${index + 1} had ${formatCurrency(value)}.`);
       revealTimerRef.current = null;
-    }, 2000);
+    }, 6000);
   };
 
   useEffect(() => {
@@ -240,7 +255,7 @@ export default function HomePage() {
       setModalResult(finalReveal.value);
       refresh(`Your case had ${formatCurrency(finalReveal.value)}. Game over.`);
       revealTimerRef.current = null;
-    }, 2000);
+    }, 5000);
 
     setPendingPlayerReveal(false);
   }, [pendingPlayerReveal, modalReveal, modalOffer, game, refresh]);
@@ -248,14 +263,25 @@ export default function HomePage() {
   const acceptOffer = () => {
     if (!snapshot || snapshot.bankerOffer === null) return;
     game.playerDecision('deal');
+    const playerValue = game.getPlayerCaseValue();
     if (offerTimerRef.current) {
       window.clearTimeout(offerTimerRef.current);
       offerTimerRef.current = null;
     }
+    if (offerButtonsTimerRef.current) {
+      window.clearTimeout(offerButtonsTimerRef.current);
+      offerButtonsTimerRef.current = null;
+    }
     setOfferVisible(false);
+    setOfferButtonsVisible(false);
     setModalOffer(null);
     setQueuedOffer(null);
-    refresh(`You accepted ${formatCurrency(snapshot.bankerOffer)}. Game over!`);
+    setModalResult(playerValue ?? null);
+    refresh(
+      `You accepted ${formatCurrency(snapshot.bankerOffer)}.${
+        playerValue !== null ? ` Your case had ${formatCurrency(playerValue)}.` : ''
+      } Game over!`,
+    );
   };
 
   const rejectOffer = () => {
@@ -265,7 +291,12 @@ export default function HomePage() {
       window.clearTimeout(offerTimerRef.current);
       offerTimerRef.current = null;
     }
+    if (offerButtonsTimerRef.current) {
+      window.clearTimeout(offerButtonsTimerRef.current);
+      offerButtonsTimerRef.current = null;
+    }
     setOfferVisible(false);
+    setOfferButtonsVisible(false);
     setModalOffer(null);
     setQueuedOffer(null);
     refresh('No deal. Keep opening cases.');
@@ -280,6 +311,7 @@ export default function HomePage() {
     setPendingPlayerReveal(false);
     setModalResult(null);
     setOfferVisible(false);
+    setOfferButtonsVisible(false);
     setStatus('Pick your case to start.');
   };
 
@@ -362,11 +394,22 @@ export default function HomePage() {
 
       {modalReveal && (
         <div className="modal-backdrop">
-          <div className="modal-card">
+          <div className="modal-card suitcase">
             <p className="eyebrow">Case {modalReveal.index + 1}</p>
-            <h2 className={`flip-value ${modalReveal.value !== null ? 'flip-active' : ''}`}>
-              {modalReveal.value === null ? '' : formatCurrency(modalReveal.value)}
-            </h2>
+            <div className="suitcase-video-frame">
+              <video
+                className={`suitcase-video ${modalReveal.value !== null ? 'open' : ''}`}
+                src="/suitcase.webm"
+                autoPlay
+                muted
+                playsInline
+              />
+              <div className="value-slot overlay">
+                <h2 className={`flip-value ${modalReveal.value !== null ? 'flip-active' : ''}`}>
+                  {modalReveal.value === null ? '' : formatCurrency(modalReveal.value)}
+                </h2>
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -378,10 +421,12 @@ export default function HomePage() {
             <h2 className={`flip-value ${offerVisible ? 'flip-active' : ''}`}>
               {offerVisible ? formatCurrency(modalOffer) : ''}
             </h2>
-            <div className="deal-actions">
-              <button onClick={acceptOffer}>Deal</button>
-              <button onClick={rejectOffer}>No Deal</button>
-            </div>
+            {offerButtonsVisible && (
+              <div className="deal-actions">
+                <button onClick={acceptOffer}>Deal</button>
+                <button onClick={rejectOffer}>No Deal</button>
+              </div>
+            )}
           </div>
         </div>
       )}
