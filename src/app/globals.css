@@ -141,7 +141,7 @@ button:disabled { opacity: 0.55; cursor: not-allowed; box-shadow: none; }
   padding: 22px 10px 16px;
   border-radius: 12px;
   border: 1px solid #0b0f1a;
-  background: linear-gradient(180deg, rgba(0,0,0,0.25), rgba(0,0,0,0.55)), url('/case2.png');
+  background: linear-gradient(180deg, rgba(0,0,0,0.25), rgba(0,0,0,0.55)), url('/case23.png');
   background-size: cover;
   background-position: center;
   color: var(--text);
@@ -162,34 +162,9 @@ button:disabled { opacity: 0.55; cursor: not-allowed; box-shadow: none; }
 .case-button.opened { background: #1f2937; color: var(--muted); text-decoration: line-through; }
 .case-button:disabled { opacity: 0.6; }
 
-.case-button::before {
-  content: '';
-  position: absolute;
-  top: 6px;
-  left: 50%;
-  transform: translateX(-50%) rotateX(0deg);
-  transform-origin: 50% 100%;
-  width: 62%;
-  height: 14px;
-  border-radius: 8px 8px 4px 4px;
-  background: linear-gradient(180deg, rgba(0,0,0,0.7), rgba(0,0,0,0.85));
-  border: 1px solid rgba(0,0,0,0.6);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 4px 10px rgba(0,0,0,0.35);
-  transition: transform 0.55s ease, box-shadow 0.45s ease;
-}
+.case-button::before { content: none; }
 
-.case-button::after {
-  content: '';
-  position: absolute;
-  top: 18px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 18px;
-  height: 6px;
-  border-radius: 3px;
-  background: #f59e0b;
-  box-shadow: 0 0 0 1px rgba(0,0,0,0.4);
-}
+.case-button::after { content: none; }
 
 .case-button.revealing,
 .case-button.opened {

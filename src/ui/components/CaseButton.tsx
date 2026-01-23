@@ -18,7 +18,7 @@ const CaseButton: React.FC<CaseButtonProps> = ({ index, isOpened, isPlayerCase, 
             onClick={onClick}
             disabled={disabled || isOpened}
         >
-            <span className="case-label">Case {index + 1}</span>
+            <span className="case-label">{index + 1}</span>
         </button>
     );
 };

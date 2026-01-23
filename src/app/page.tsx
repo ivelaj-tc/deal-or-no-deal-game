@@ -147,7 +147,7 @@ export default function HomePage() {
       overlayTimerRef.current = window.setTimeout(() => {
         setValueOverlayVisible(true);
         overlayTimerRef.current = null;
-      }, 4000);
+      }, 6000);
     } else {
       setValueOverlayVisible(false);
     }
@@ -279,7 +279,7 @@ export default function HomePage() {
       setModalResult(finalReveal.value);
       refresh(`Your case had ${formatCurrency(finalReveal.value)}. Game over.`);
       revealTimerRef.current = null;
-    }, 5000);
+    }, 6000);
 
     setPendingPlayerReveal(false);
   }, [pendingPlayerReveal, modalReveal, modalOffer, game, refresh]);
@@ -426,6 +426,7 @@ export default function HomePage() {
                 className="suitcase-lottie"
                 src="https://lottie.host/ca33445e-3f11-4387-9b74-dde5ca21f9dc/QRmyvqwXYa.lottie"
                 autoplay
+                speed={0.5}
                 loop={false}
               />
               {valueOverlayVisible && (
