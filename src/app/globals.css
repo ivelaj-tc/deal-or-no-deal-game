@@ -350,6 +350,12 @@ button:disabled { opacity: 0.55; cursor: not-allowed; box-shadow: none; }
   display: block;
 }
 
+.suitcase-lottie {
+  width: 100%;
+  height: 260px;
+  display: block;
+}
+
 .value-slot {
   background: radial-gradient(circle at 50% 40%, rgba(255,210,140,0.18), rgba(34,211,238,0.08));
   border: 1px solid rgba(255,255,255,0.06);
@@ -360,7 +366,7 @@ button:disabled { opacity: 0.55; cursor: not-allowed; box-shadow: none; }
 
 .value-slot.overlay {
   position: absolute;
-  inset: auto 0 8px 0;
+  inset: auto 0 160px 0;
   margin: 0 auto;
   width: 80%;
   text-align: center;

@@ -1,5 +1,6 @@
 "use client";
 
+import { DotLottiePlayer } from '@dotlottie/react-player';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Game, { CASE_VALUES, GameSnapshot } from '@/game/logic';
 import CaseButton from '@/ui/components/CaseButton';
@@ -55,12 +56,14 @@ export default function HomePage() {
   const [pendingPlayerReveal, setPendingPlayerReveal] = useState(false);
   const [offerVisible, setOfferVisible] = useState(false);
   const [offerButtonsVisible, setOfferButtonsVisible] = useState(false);
+  const [valueOverlayVisible, setValueOverlayVisible] = useState(false);
   const [displayRemaining, setDisplayRemaining] = useState<number[]>(CASE_VALUES);
   const [pendingRemaining, setPendingRemaining] = useState<number[] | null>(null);
   const [status, setStatus] = useState('Pick your case to start.');
   const revealTimerRef = useRef<number | null>(null);
   const offerTimerRef = useRef<number | null>(null);
   const offerButtonsTimerRef = useRef<number | null>(null);
+  const overlayTimerRef = useRef<number | null>(null);
 
   const applyPendingRemaining = useCallback(() => {
     if (pendingRemaining) {
@@ -118,6 +121,9 @@ export default function HomePage() {
     if (offerButtonsTimerRef.current) {
       window.clearTimeout(offerButtonsTimerRef.current);
     }
+    if (overlayTimerRef.current) {
+      window.clearTimeout(overlayTimerRef.current);
+    }
   }, []);
 
   const refresh = useCallback(
@@ -128,6 +134,24 @@ export default function HomePage() {
     },
     [game],
   );
+
+  const modalRevealIndex = modalReveal?.index ?? null;
+
+  useEffect(() => {
+    if (overlayTimerRef.current) {
+      window.clearTimeout(overlayTimerRef.current);
+      overlayTimerRef.current = null;
+    }
+    if (modalRevealIndex !== null) {
+      setValueOverlayVisible(false);
+      overlayTimerRef.current = window.setTimeout(() => {
+        setValueOverlayVisible(true);
+        overlayTimerRef.current = null;
+      }, 4000);
+    } else {
+      setValueOverlayVisible(false);
+    }
+  }, [modalRevealIndex]);
 
   useEffect(() => {
     if (!modalReveal && queuedOffer !== null) {
@@ -312,6 +336,7 @@ export default function HomePage() {
     setModalResult(null);
     setOfferVisible(false);
     setOfferButtonsVisible(false);
+    setValueOverlayVisible(false);
     setStatus('Pick your case to start.');
   };
 
@@ -397,19 +422,19 @@ export default function HomePage() {
           <div className="modal-card suitcase">
             <p className="eyebrow">Case {modalReveal.index + 1}</p>
             <div className="suitcase-video-frame">
-              <video
-                className={`suitcase-video ${modalReveal.value !== null ? 'open' : ''}`}
-                // src="/suitcase.webm"
-                src="/cash_bag.webm"
-                autoPlay
-                muted
-                playsInline
+              <DotLottiePlayer
+                className="suitcase-lottie"
+                src="https://lottie.host/ca33445e-3f11-4387-9b74-dde5ca21f9dc/QRmyvqwXYa.lottie"
+                autoplay
+                loop={false}
               />
-              <div className="value-slot overlay">
-                <h2 className={`flip-value ${modalReveal.value !== null ? 'flip-active' : ''}`}>
-                  {modalReveal.value === null ? '' : formatCurrency(modalReveal.value)}
-                </h2>
-              </div>
+              {valueOverlayVisible && (
+                <div className="value-slot overlay">
+                  <h2 className={`flip-value ${modalReveal.value !== null ? 'flip-active' : ''}`}>
+                    {modalReveal.value === null ? '' : formatCurrency(modalReveal.value)}
+                  </h2>
+                </div>
+              )}
             </div>
           </div>
         </div>

@@ -64,6 +64,3 @@ Contributions are welcome! Please follow these steps to contribute:
 
 ## License
 This project is licensed under the MIT License. See the LICENSE file for details.
-
-https://sflix.ps/movie/free-your-letter-hd-140773
-https://sflix.ps/movie/free-in-your-dreams-hd-137686
