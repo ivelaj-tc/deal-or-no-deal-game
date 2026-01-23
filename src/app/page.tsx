@@ -399,7 +399,8 @@ export default function HomePage() {
             <div className="suitcase-video-frame">
               <video
                 className={`suitcase-video ${modalReveal.value !== null ? 'open' : ''}`}
-                src="/suitcase.webm"
+                // src="/suitcase.webm"
+                src="/cash_bag.webm"
                 autoPlay
                 muted
                 playsInline
