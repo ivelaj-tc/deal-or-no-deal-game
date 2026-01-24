@@ -566,7 +566,7 @@ export default function HomePage() {
           <div className="modal-card" onClick={(e) => e.stopPropagation()}>
             <p className="eyebrow">Your case</p>
             <h2 className="flip-value flip-active">{formatCurrency(modalResult)}</h2>
-            <p className="muted">You stuck with your original case.</p>
+            <p className="muted">Your case had {formatCurrency(modalResult)}.</p>
             <div className="deal-actions">
               <button onClick={() => setModalResult(null)}>Close</button>
               <button onClick={resetGame}>Play again</button>
