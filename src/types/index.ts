@@ -2,6 +2,7 @@ export interface GameState {
     currentRound: number;
     playerCases: number[];
     bankerOffer: number | null;
+    bankerPersonality?: string;
     isDealAccepted: boolean;
 }
 

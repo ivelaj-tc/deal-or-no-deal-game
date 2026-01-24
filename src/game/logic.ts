@@ -1,4 +1,4 @@
-import Banker from './banker';
+import Banker, { BankerPersonality } from './banker';
 import Cases from './cases';
 import { GameState, Offer } from '../types';
 
@@ -30,14 +30,15 @@ export class Game {
     private cases: Cases;
     private state: GameSnapshot;
 
-    constructor() {
-        this.banker = new Banker();
+    constructor(personality: BankerPersonality = 'balanced') {
+        this.banker = new Banker(personality);
         this.cases = new Cases();
         this.state = {
             currentRound: 1,
             playerCases: [],
             bankerOffer: null,
             isDealAccepted: false,
+            bankerPersonality: personality,
             playerCaseIndex: null,
             openedCases: [],
             remainingValues: [],
@@ -48,11 +49,14 @@ export class Game {
     public initialize(): void {
         const randomized = shuffle(CASE_VALUES);
         this.cases.initializeCases(randomized);
+        const personality = this.state.bankerPersonality ?? 'balanced';
+        this.banker.setPersonality(personality as BankerPersonality);
         this.state = {
             currentRound: 1,
             playerCases: [],
             bankerOffer: null,
             isDealAccepted: false,
+            bankerPersonality: personality,
             playerCaseIndex: null,
             openedCases: [],
             remainingValues: randomized,
@@ -88,6 +92,11 @@ export class Game {
         this.state.bankerOffer = offer;
         this.state.offers.push({ amount: offer, round: this.state.currentRound });
         return offer;
+    }
+
+    public setBankerPersonality(personality: BankerPersonality): void {
+        this.state.bankerPersonality = personality;
+        this.banker.setPersonality(personality);
     }
 
     public revealPlayerCase(): { index: number; value: number } | null {
@@ -158,3 +167,4 @@ export class Game {
 }
 
 export default Game;
+export type { BankerPersonality } from './banker';

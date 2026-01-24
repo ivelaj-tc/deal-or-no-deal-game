@@ -2,11 +2,44 @@
 
 import { DotLottiePlayer } from '@dotlottie/react-player';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import Game, { CASE_VALUES, GameSnapshot } from '@/game/logic';
+import Game, { CASE_VALUES, GameSnapshot, BankerPersonality } from '@/game/logic';
 import CaseButton from '@/ui/components/CaseButton';
 
 const formatCurrency = (value: number) =>
-  value.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+  value.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
+
+const classifyRisk = (remainingCount: number) => {
+  if (remainingCount > 10) return 'Cautious';
+  if (remainingCount > 4) return 'Balanced';
+  return 'Calculated';
+};
+
+const BANKER_PERSONALITIES: Array<{ key: BankerPersonality; label: string; description: string }> = [
+  { key: 'balanced', label: 'Balanced', description: 'Steady, default offer pattern.' },
+  { key: 'generous', label: 'Generous', description: 'Higher, softer offers earlier.' },
+  { key: 'aggressive', label: 'Aggressive', description: 'Lowball early, reluctant to pay.' },
+  { key: 'volatile', label: 'Volatile', description: 'Swingy offers with some randomness.' },
+];
+
+const pickRandomPersonality = (): BankerPersonality => BANKER_PERSONALITIES[Math.floor(Math.random() * BANKER_PERSONALITIES.length)].key;
+
+const ordinalWords = [
+  "First",
+  "Second",
+  "Third",
+  "Fourth",
+  "Fifth",
+  "Sixth",
+  "Seventh",
+  "Eighth",
+  "Ninth",
+  "Tenth",
+];
+
+const toOrdinalWord = (n: number) => {
+  return ordinalWords[n - 1] ?? `${n}th`;
+}
+
 
 // Classic Deal or No Deal offer thresholds (cases opened) per round
 const OFFER_THRESHOLDS = [6, 11, 15, 18, 20, 21, 22, 23, 24, 25];
@@ -38,7 +71,7 @@ const playSound = (src: string) => {
   try {
     const audio = new Audio(src);
     audio.currentTime = 0;
-    audio.play().catch(() => {});
+    audio.play().catch(() => { });
   } catch (e) {
     // ignore audio errors (e.g., autoplay restrictions)
   }
@@ -52,6 +85,9 @@ export default function HomePage() {
   const [modalOffer, setModalOffer] = useState<number | null>(null);
   const [queuedOffer, setQueuedOffer] = useState<number | null>(null);
   const [modalResult, setModalResult] = useState<number | null>(null);
+  const [offerHistoryOpen, setOfferHistoryOpen] = useState(false);
+  const [riskProfile, setRiskProfile] = useState<string | null>(null);
+  const [bankerPersonality, setBankerPersonality] = useState<BankerPersonality>('balanced');
   const [revealingIndex, setRevealingIndex] = useState<number | null>(null);
   const [pendingPlayerReveal, setPendingPlayerReveal] = useState(false);
   const [offerVisible, setOfferVisible] = useState(false);
@@ -82,11 +118,15 @@ export default function HomePage() {
   }, [modalReveal, modalOffer]);
 
   useEffect(() => {
+    const initialPersonality = pickRandomPersonality();
+    setBankerPersonality(initialPersonality);
+    game.setBankerPersonality(initialPersonality);
     game.initialize();
     const state = game.getState();
     setSnapshot(state);
     setDisplayRemaining(state.remainingValues);
     setPendingRemaining(null);
+    setRiskProfile(null);
   }, [game]);
 
   useEffect(() => {
@@ -277,6 +317,7 @@ export default function HomePage() {
       setModalReveal({ index: finalReveal.index, value: finalReveal.value });
       setSnapshot(afterReveal);
       setModalResult(finalReveal.value);
+      setRiskProfile('Bold');
       refresh(`Your case had ${formatCurrency(finalReveal.value)}. Game over.`);
       revealTimerRef.current = null;
     }, 6000);
@@ -288,6 +329,8 @@ export default function HomePage() {
     if (!snapshot || snapshot.bankerOffer === null) return;
     game.playerDecision('deal');
     const playerValue = game.getPlayerCaseValue();
+    const remainingCount = snapshot.remainingValues.length;
+    setRiskProfile(classifyRisk(remainingCount));
     if (offerTimerRef.current) {
       window.clearTimeout(offerTimerRef.current);
       offerTimerRef.current = null;
@@ -302,8 +345,7 @@ export default function HomePage() {
     setQueuedOffer(null);
     setModalResult(playerValue ?? null);
     refresh(
-      `You accepted ${formatCurrency(snapshot.bankerOffer)}.${
-        playerValue !== null ? ` Your case had ${formatCurrency(playerValue)}.` : ''
+      `You accepted ${formatCurrency(snapshot.bankerOffer)}.${playerValue !== null ? ` Your case had ${formatCurrency(playerValue)}.` : ''
       } Game over!`,
     );
   };
@@ -327,6 +369,22 @@ export default function HomePage() {
   };
 
   const resetGame = () => {
+    if (revealTimerRef.current) {
+      window.clearTimeout(revealTimerRef.current);
+      revealTimerRef.current = null;
+    }
+    if (offerTimerRef.current) {
+      window.clearTimeout(offerTimerRef.current);
+      offerTimerRef.current = null;
+    }
+    if (offerButtonsTimerRef.current) {
+      window.clearTimeout(offerButtonsTimerRef.current);
+      offerButtonsTimerRef.current = null;
+    }
+    if (overlayTimerRef.current) {
+      window.clearTimeout(overlayTimerRef.current);
+      overlayTimerRef.current = null;
+    }
     const fresh = game.reset();
     setSnapshot(fresh);
     setDisplayRemaining(fresh.remainingValues);
@@ -334,11 +392,34 @@ export default function HomePage() {
     setLastReveal(null);
     setPendingPlayerReveal(false);
     setModalResult(null);
+    setModalOffer(null);
+    setQueuedOffer(null);
+    setModalReveal(null);
+    setOfferHistoryOpen(false);
+    setRiskProfile(null);
     setOfferVisible(false);
     setOfferButtonsVisible(false);
     setValueOverlayVisible(false);
     setStatus('Pick your case to start.');
   };
+
+  const handlePersonalityChange = (personality: BankerPersonality) => {
+    setBankerPersonality(personality);
+    game.setBankerPersonality(personality);
+    const state = game.getState();
+    setSnapshot(state);
+    setDisplayRemaining(state.remainingValues);
+    setPendingRemaining(null);
+    setStatus(`Banker set to ${BANKER_PERSONALITIES.find((p) => p.key === personality)?.label ?? 'Selected'}. Pick your case to start.`);
+  };
+
+  const personalityLocked = snapshot ? snapshot.playerCaseIndex !== null || snapshot.openedCases.length > 0 || snapshot.isDealAccepted : false;
+
+  useEffect(() => {
+    if (snapshot?.bankerPersonality) {
+      setBankerPersonality(snapshot.bankerPersonality as BankerPersonality);
+    }
+  }, [snapshot?.bankerPersonality]);
 
   if (!snapshot) return null;
 
@@ -358,6 +439,28 @@ export default function HomePage() {
           <p className="status">{status}</p>
         </div>
         <div className="actions">
+          {riskProfile && <div className="risk-chip">🧠 Risk profile: {riskProfile}</div>}
+          <div className="personality-picker">
+            <label htmlFor="personality-select">Banker Personality</label>
+            <select
+              id="personality-select"
+              value={bankerPersonality}
+              onChange={(e) => handlePersonalityChange(e.target.value as BankerPersonality)}
+              disabled={personalityLocked}
+            >
+              {BANKER_PERSONALITIES.map((p) => (
+                <option key={p.key} value={p.key}>
+                  {p.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <button
+            onClick={() => setOfferHistoryOpen(true)}
+            disabled={!snapshot.offers.length}
+          >
+            Banker offers ({snapshot.offers.length})
+          </button>
           {snapshot.isDealAccepted && (
             <button onClick={resetGame}>Play again</button>
           )}
@@ -370,7 +473,7 @@ export default function HomePage() {
         </div>
 
         <div className="center-stack">
-          <div className="panel">
+          <div className="panel cases-panel">
             <div className="panel-head">
               <div className="tag">Cases</div>
               <div className="meta">
@@ -466,6 +569,30 @@ export default function HomePage() {
             <p className="muted">You stuck with your original case.</p>
             <div className="deal-actions">
               <button onClick={() => setModalResult(null)}>Close</button>
+              <button onClick={resetGame}>Play again</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {offerHistoryOpen && snapshot && (
+        <div className="modal-backdrop" onClick={() => setOfferHistoryOpen(false)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <p className="eyebrow">Banker offer history</p>
+            {snapshot.offers.length === 0 ? (
+              <p className="muted">No offers yet.</p>
+            ) : (
+              <div className="card" style={{ textAlign: 'left', marginTop: 8 }}>
+                {[...snapshot.offers].reverse().map((offer, idx) => (
+                  <p key={`${offer.round}-${idx}`}>
+                    {toOrdinalWord(offer.round)} offer: <strong>{formatCurrency(offer.amount)}</strong>
+                  </p>
+                ))}
+
+              </div>
+            )}
+            <div className="deal-actions" style={{ marginTop: 12 }}>
+              <button onClick={() => setOfferHistoryOpen(false)}>Close</button>
             </div>
           </div>
         </div>
