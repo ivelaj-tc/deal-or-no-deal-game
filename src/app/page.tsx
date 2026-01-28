@@ -328,6 +328,8 @@ export default function HomePage() {
   const acceptOffer = () => {
     if (!snapshot || snapshot.bankerOffer === null) return;
     game.playerDecision('deal');
+    const updatedState = game.getState();
+    setSnapshot(updatedState);
     const playerValue = game.getPlayerCaseValue();
     const remainingCount = snapshot.remainingValues.length;
     setRiskProfile(classifyRisk(remainingCount));
@@ -385,6 +387,7 @@ export default function HomePage() {
       window.clearTimeout(overlayTimerRef.current);
       overlayTimerRef.current = null;
     }
+    game.setBankerPersonality(bankerPersonality);
     const fresh = game.reset();
     setSnapshot(fresh);
     setDisplayRemaining(fresh.remainingValues);
@@ -395,6 +398,7 @@ export default function HomePage() {
     setModalOffer(null);
     setQueuedOffer(null);
     setModalReveal(null);
+    setRevealingIndex(null);
     setOfferHistoryOpen(false);
     setRiskProfile(null);
     setOfferVisible(false);
