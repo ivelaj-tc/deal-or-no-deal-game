@@ -64,8 +64,8 @@ const MoneyColumn = ({ values, remaining }: { values: number[]; remaining: Set<n
   </div>
 );
 
-const REVEAL_SOUND = '/sounds/reveal.mp3';
-const OFFER_SOUND = '/sounds/offer.mp3';
+const REVEAL_SOUND = 'sounds/reveal.mp3';
+const OFFER_SOUND = 'sounds/offer.mp3';
 
 const playSound = (src: string) => {
   try {
